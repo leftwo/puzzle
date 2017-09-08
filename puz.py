@@ -1,14 +1,74 @@
 import random
 from random import randint
 import itertools
+import math
+import argparse
+import sys
 
+empty = {"up":   {"bird":0, "side":0},
+         "right":{"bird":0, "side":0},
+         "down": {"bird":0, "side":0},
+         "left": {"bird":0, "side":0}}
+
+board = { "top":   {"r":{}, "m":{}, "l":{}},
+          "middle":{"r":{}, "m":{}, "l":{}},
+          "bottom":{"r":{}, "m":{}, "l":{}}}
+
+pieces = {
+    1:{"name": "1",
+       "up":   {"bird":3, "side":1},
+       "right":{"bird":3, "side":2},
+       "down": {"bird":1, "side":2},
+       "left": {"bird":2, "side":1}},
+    2:{"name": "2",
+       "up":   {"bird":2, "side":2},
+       "right":{"bird":4, "side":2},
+       "down": {"bird":1, "side":1},
+       "left": {"bird":1, "side":1}},
+    3:{"name": "3",
+       "up":   {"bird":1, "side":1},
+       "right":{"bird":2, "side":1},
+       "down": {"bird":4, "side":1},
+       "left": {"bird":3, "side":1}},
+    4:{"name": "4",
+       "up":   {"bird":4, "side":2},
+       "right":{"bird":1, "side":1},
+       "down": {"bird":3, "side":1},
+       "left": {"bird":2, "side":1}},
+    5:{"name": "5",
+       "up":   {"bird":3, "side":2},
+       "right":{"bird":4, "side":2},
+       "down": {"bird":2, "side":2},
+       "left": {"bird":1, "side":1}},
+    6:{"name": "6",
+       "up":   {"bird":1, "side":1},
+       "right":{"bird":2, "side":1},
+       "down": {"bird":4, "side":2},
+       "left": {"bird":3, "side":1}},
+    7:{"name": "7",
+       "up":   {"bird":2, "side":2},
+       "right":{"bird":3, "side":1},
+       "down": {"bird":4, "side":2},
+       "left": {"bird":4, "side":1}},
+    8:{"name": "8",
+       "up":   {"bird":4, "side":1},
+       "right":{"bird":2, "side":2},
+       "down": {"bird":3, "side":2},
+       "left": {"bird":1, "side":2}},
+    9:{"name": "9",
+       "up":   {"bird":3, "side":1},
+       "right":{"bird":1, "side":2},
+       "down": {"bird":2, "side":1},
+       "left": {"bird":4, "side":2}},
+}
 def print_piece(num, piece):
     """ Function to print out a piece """
     print("   {0}:{1}".format(piece["up"]["bird"], piece["up"]["side"]))
     print("{0}:{1} {2} {3}:{4}".format(piece["left"]["bird"], \
-      piece["left"]["side"], num, piece["right"]["bird"],
+      piece["left"]["side"], piece["name"], piece["right"]["bird"],
       piece["right"]["side"]))
     print("   {0}:{1}".format(piece["down"]["bird"], piece["down"]["side"]))
+
 
 def rotate_left(piece, pieces):
     """ rotate a piece to the left """
@@ -39,12 +99,13 @@ def print_board_row(br):
       br["l"]["up"]["bird"], br["l"]["up"]["side"])
 
     print"|       | |       | |       |"
-    print("{0}:{1}   {2}:{3} {4}:{5}   {6}:{7} {8}:{9}   {10}:{11}").format(\
-      br["r"]["left"]["bird"], br["r"]["left"]["side"],\
+    print("{0}:{1} {2} {3}:{4} {5}:{6} {7} {8}:{9} {10}:{11} {12} {13}:{14}").\
+      format(\
+      br["r"]["left"]["bird"], br["r"]["left"]["side"], br["r"]["name"],
       br["r"]["right"]["bird"], br["r"]["right"]["side"],\
-      br["m"]["left"]["bird"], br["m"]["left"]["side"],\
+      br["m"]["left"]["bird"], br["m"]["left"]["side"], br["m"]["name"],
       br["m"]["right"]["bird"], br["m"]["right"]["side"],\
-      br["l"]["left"]["bird"], br["l"]["left"]["side"],\
+      br["l"]["left"]["bird"], br["l"]["left"]["side"], br["l"]["name"],
       br["l"]["right"]["bird"], br["l"]["right"]["side"])
 
     print"|       | |       | |       |"
@@ -60,68 +121,8 @@ def print_board(board):
     print_board_row(board["middle"])
     print_board_row(board["bottom"])
 
-pieces = {
-    1:{"up":   {"bird":3, "side":1},
-       "right":{"bird":3, "side":2},
-       "down": {"bird":1, "side":2},
-       "left": {"bird":2, "side":1}},
-    2:{"up":   {"bird":2, "side":2},
-       "right":{"bird":4, "side":2},
-       "down": {"bird":1, "side":1},
-       "left": {"bird":1, "side":1}},
-    3:{"up":   {"bird":1, "side":1},
-       "right":{"bird":2, "side":1},
-       "down": {"bird":4, "side":1},
-       "left": {"bird":3, "side":1}},
-    4:{"up":   {"bird":4, "side":2},
-       "right":{"bird":1, "side":1},
-       "down": {"bird":3, "side":1},
-       "left": {"bird":2, "side":1}},
-    5:{"up":   {"bird":3, "side":2},
-       "right":{"bird":4, "side":2},
-       "down": {"bird":2, "side":2},
-       "left": {"bird":1, "side":1}},
-    6:{"up":   {"bird":1, "side":1},
-       "right":{"bird":2, "side":1},
-       "down": {"bird":4, "side":2},
-       "left": {"bird":3, "side":1}},
-    7:{"up":   {"bird":2, "side":2},
-       "right":{"bird":3, "side":1},
-       "down": {"bird":4, "side":2},
-       "left": {"bird":4, "side":1}},
-    8:{"up":   {"bird":4, "side":1},
-       "right":{"bird":2, "side":2},
-       "down": {"bird":3, "side":2},
-       "left": {"bird":1, "side":2}},
-    9:{"up":   {"bird":3, "side":1},
-       "right":{"bird":1, "side":2},
-       "down": {"bird":2, "side":1},
-       "left": {"bird":4, "side":2}},
-}
 
-empty = {"up":   {"bird":0, "side":0},
-         "right":{"bird":0, "side":0},
-         "down": {"bird":0, "side":0},
-         "left": {"bird":0, "side":0}}
 
-board = { "top":   {"r":{}, "m":{}, "l":{}},
-          "middle":{"r":{}, "m":{}, "l":{}},
-          "bottom":{"r":{}, "m":{}, "l":{}}}
-
-for piece in pieces:
-    print_piece(piece, pieces[piece])
-
-board["top"]["r"] = empty
-board["top"]["m"] = empty
-board["top"]["l"] = empty
-board["middle"]["r"] = empty
-board["middle"]["m"] = empty
-board["middle"]["l"] = empty
-board["bottom"]["r"] = empty
-board["bottom"]["m"] = empty
-board["bottom"]["l"] = empty
-
-print ""
 
 # With 3x3, make this row/column based
 def check_board(b):
@@ -181,75 +182,94 @@ def check_board(b):
     return True
 
 
-found = False
-perms = 0;
-tc = 0;
+if __name__ == "__main__":
+    """ Take our puzzle, compute permutations and start rotating """
+    found = 0
+    perms = 0;
+    tc = 0;
 
-for bp in itertools.permutations((x for x in range(1, 10)), 9):
-    perms = perms + 1
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--start", \
+                        help="Starting permutation count", type=int)
+    parser.add_argument("-q", "--quit", \
+                        help="quitting permutation count", type=int)
+    args = parser.parse_args()
 
-print "We have ", perms, " permutations to explore"
+    for piece in pieces:
+        print_piece(piece, pieces[piece])
 
-count = 0
-for bp in itertools.permutations((x for x in range(1, 10)), 9):
-    count = count + 1
+    board["top"]["r"] = empty
+    board["top"]["m"] = empty
+    board["top"]["l"] = empty
+    board["middle"]["r"] = empty
+    board["middle"]["m"] = empty
+    board["middle"]["l"] = empty
+    board["bottom"]["r"] = empty
+    board["bottom"]["m"] = empty
+    board["bottom"]["l"] = empty
 
-    print bp, perms - count
-    board["top"]["r"] = pieces[bp[0]]
-    board["top"]["m"] = pieces[bp[1]]
-    board["top"]["l"] = pieces[bp[2]]
-    board["middle"]["r"] = pieces[bp[3]]
-    board["middle"]["m"] = pieces[bp[4]]
-    board["middle"]["l"] = pieces[bp[5]]
-    board["bottom"]["r"] = pieces[bp[6]]
-    board["bottom"]["m"] = pieces[bp[7]]
-    board["bottom"]["l"] = pieces[bp[8]]
+    for bp in itertools.permutations((x for x in range(1, 10)), 9):
+        perms = perms + 1
 
-    found = False
+    print "We have ", perms, " permutations to explore"
 
-    for bp0_r in range(0, 4):
-	for bp1_r in range(0, 4):
-	    for bp2_r in range(0, 4):
-		for bp3_r in range(0, 4):
-		    for bp4_r in range(0, 4):
-			for bp5_r in range(0, 4):
-			    for bp6_r in range(0, 4):
-				for bp7_r in range(0, 4):
-				    for bp8_r in range(0, 4):
-					# print_board(board)
-					tc = tc + 1
-					if check_board(board):
-					    print "Yes"
-					    found = True
-					    break
-					rotate_left(bp[8], pieces)
-				    if found == True:
-					break
-				    rotate_left(bp[7], pieces)
-				if found == True:
-				    break
-				rotate_left(bp[6], pieces)
-			    if found == True:
-				break
-			    rotate_left(bp[5], pieces)
-			if found == True:
-			    break
-			rotate_left(bp[4], pieces)
-		    if found == True:
-			break
-		    rotate_left(bp[3], pieces)
-		if found == True:
-		    break
-		rotate_left(bp[2], pieces)
-	    if found == True:
-		break
-	    rotate_left(bp[1], pieces)
-	if found == True:
+    # Total rotations possible per iteration is:
+    # Sides of each piece to the power of number of pieces.
+    rotations = int(math.pow(4, 9))
+
+    count = 0
+    for bp in itertools.permutations((x for x in range(1, 10)), 9):
+        count = count + 1
+        # Make command line option to start from a specific spot
+        if (args.start and count < args.start):
+            tc = tc + rotations
+            continue
+
+        if (args.quit and count > args.quit):
 	    break
-	rotate_left(bp[0], pieces)
-    if found == True:
-	break
 
-print_board(board)
-print bp
-print "after ", count, " permutaions and ", tc, " rotations"
+        # print bp, " count:", count, " remaining:", perms - count
+	info_str = "\r" + str(bp) + " count:" + str(count) + " remaining:" + \
+	    str(perms - count) + "   "
+	sys.stdout.write(info_str)
+	sys.stdout.flush()
+        board["top"]["r"] = pieces[bp[0]]
+        board["top"]["m"] = pieces[bp[1]]
+        board["top"]["l"] = pieces[bp[2]]
+        board["middle"]["r"] = pieces[bp[3]]
+        board["middle"]["m"] = pieces[bp[4]]
+        board["middle"]["l"] = pieces[bp[5]]
+        board["bottom"]["r"] = pieces[bp[6]]
+        board["bottom"]["m"] = pieces[bp[7]]
+        board["bottom"]["l"] = pieces[bp[8]]
+
+        for x in range(0, rotations):
+            if check_board(board):
+		found = found + 1
+                print ""
+                print "found match", found, "at ", bp
+		print "after ", count, " permutaions and ", tc, " rotations"
+		print_board(board)
+		print ""
+
+            rotate_left(bp[8], pieces)
+            tc = tc + 1
+            if (tc % 4 == 0):
+                rotate_left(bp[7], pieces)
+            if (tc % 16 == 0):
+                rotate_left(bp[6], pieces)
+            if (tc % 64 == 0):
+                rotate_left(bp[5], pieces)
+            if (tc % 256 == 0):
+                rotate_left(bp[4], pieces)
+            if (tc % 1024 == 0):
+                rotate_left(bp[3], pieces)
+            if (tc % 4096 == 0):
+                rotate_left(bp[2], pieces)
+            if (tc % 16384 == 0):
+                rotate_left(bp[1], pieces)
+            if (tc % 65536 == 0):
+                rotate_left(bp[0], pieces)
+
+    print "\n", found, "matches after ", count, " permutaions and ", tc,\
+      " rotations"
