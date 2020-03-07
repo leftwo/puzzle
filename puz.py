@@ -65,19 +65,18 @@ def print_piece(piece):
     """ Function to print out a piece """
 
     print("+--{0}:{1}--+".format(piece["up"]["bird"], piece["up"]["side"]))
-    print "|       |"
+    print("|       |")
     print("{0}:{1} {2} {3}:{4}".format(piece["left"]["bird"], \
       piece["left"]["side"], piece["name"], piece["right"]["bird"],
       piece["right"]["side"]))
-    print "|       |"
+    print("|       |")
     print("+--{0}:{1}--+".format(piece["down"]["bird"], \
       piece["down"]["side"]))
 
 
-
 def rotate_left(piece, pieces):
     """ rotate a piece to the left """
-    # print "Rotating piece ", piece
+    # print("Rotating piece ", piece)
 
     temp = {}
     temp["bird"] = pieces[piece]["up"]["bird"]
@@ -103,7 +102,7 @@ def print_board_row(br):
       br["m"]["up"]["bird"], br["m"]["up"]["side"],\
       br["l"]["up"]["bird"], br["l"]["up"]["side"])
 
-    print"|       | |       | |       |"
+    print("|       | |       | |       |")
     print("{0}:{1} {2} {3}:{4} {5}:{6} {7} {8}:{9} {10}:{11} {12} {13}:{14}").\
       format(\
       br["r"]["left"]["bird"], br["r"]["left"]["side"], br["r"]["name"],
@@ -113,7 +112,7 @@ def print_board_row(br):
       br["l"]["left"]["bird"], br["l"]["left"]["side"], br["l"]["name"],
       br["l"]["right"]["bird"], br["l"]["right"]["side"])
 
-    print"|       | |       | |       |"
+    print("|       | |       | |       |")
     print("+--{0}:{1}--+ +--{2}:{3}--+ +--{4}:{5}--+").format(\
       br["r"]["down"]["bird"], br["r"]["down"]["side"],\
       br["m"]["down"]["bird"], br["m"]["down"]["side"],\
@@ -125,6 +124,7 @@ def print_board(board):
     print_board_row(board["top"])
     print_board_row(board["middle"])
     print_board_row(board["bottom"])
+    print("\n")
 
 
 def piece_has(cp, bs):
@@ -198,10 +198,10 @@ def check_permutation(b):
         return False
 
     if found > 4:
-        print "What, more than 4????"
-        print mp
-        print cp
-        print b
+        print("What, more than 4????")
+        print(mp)
+        print(cp)
+        print(b)
         sys.exit(1)
 
     # Top left compare
@@ -275,15 +275,15 @@ def check_board(b):
         return False
 
     if b["top"]["r"]["down"]["bird"] != b["middle"]["r"]["up"]["bird"]:
-	return False
+        return False
     if b["top"]["r"]["down"]["side"] == b["middle"]["r"]["up"]["side"]:
         return False
     if b["top"]["m"]["down"]["bird"] != b["middle"]["m"]["up"]["bird"]:
-	return False
+        return False
     if b["top"]["m"]["down"]["side"] == b["middle"]["m"]["up"]["side"]:
         return False
     if b["top"]["l"]["down"]["bird"] != b["middle"]["l"]["up"]["bird"]:
-	return False
+        return False
     if b["top"]["l"]["down"]["side"] == b["middle"]["l"]["up"]["side"]:
         return False
 
@@ -297,15 +297,15 @@ def check_board(b):
         return False
 
     if b["middle"]["r"]["down"]["bird"] != b["bottom"]["r"]["up"]["bird"]:
-	return False
+        return False
     if b["middle"]["r"]["down"]["side"] == b["bottom"]["r"]["up"]["side"]:
         return False
     if b["middle"]["m"]["down"]["bird"] != b["bottom"]["m"]["up"]["bird"]:
-	return False
+        return False
     if b["middle"]["m"]["down"]["side"] == b["bottom"]["m"]["up"]["side"]:
         return False
     if b["middle"]["l"]["down"]["bird"] != b["bottom"]["l"]["up"]["bird"]:
-	return False
+        return False
     if b["middle"]["l"]["down"]["side"] == b["bottom"]["l"]["up"]["side"]:
         return False
 
@@ -330,7 +330,7 @@ def brute_force(args, board):
     for bp in itertools.permutations((x for x in range(1, 10)), 9):
         perms = perms + 1
 
-    print "We have ", perms, " permutations to explore"
+    print("We have %d permutations to explore" % perms)
 
     # Total rotations possible per iteration is:
     # Sides of each piece to the power of number of pieces.
@@ -377,11 +377,10 @@ def brute_force(args, board):
         for x in range(0, rotations):
             if check_board(board):
                 found = found + 1
-                print ""
-                print "found match", found, "at ", bp
-                print "after ", count, " permutaions and ", tc, " rotations"
+                print("\n")
+                print("found match", found, "at ", bp)
+                print("after %d permutaions and %d rotations" % (count, tc))
                 print_board(board)
-                print ""
 
             rotate_left(bp[8], pieces)
             tc = tc + 1
@@ -402,8 +401,8 @@ def brute_force(args, board):
             if (tc % 65536 == 0):
                 rotate_left(bp[0], pieces)
 
-    print "\n", found, "matches after ", count, " permutaions and ", tc,\
-      " rotations"
+    print("found %d matches after %d permutaions and %d rotations"
+            % (found, count, tc))
 
 
 if __name__ == "__main__":
