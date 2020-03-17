@@ -1,409 +1,393 @@
-import random
-from random import randint
 import itertools
 import math
 import argparse
 import sys
 
-empty = {"up":   {"bird":0, "side":0},
-         "right":{"bird":0, "side":0},
-         "down": {"bird":0, "side":0},
-         "left": {"bird":0, "side":0}}
+empty = { "name": "0", "orentation":0, "card":[
+       {"bird":0, "side":0},
+       {"bird":0, "side":0},
+       {"bird":0, "side":0},
+       {"bird":0, "side":0}
+    ]}
 
-board = { "top":   {"r":{}, "m":{}, "l":{}},
-          "middle":{"r":{}, "m":{}, "l":{}},
-          "bottom":{"r":{}, "m":{}, "l":{}}}
+# The board is a 9X9 square.
+# Each location describes a piece and it's orentation (turn)
+# Turn is 0-3 with 0 being no turn, 1 is rotating the piece clockwise
+# by 1/4, and so on.
+board_old = { 
+     "top":    {"l":{}, "c":{}, "r":{}}, \
+     "middle": {"l":{}, "c":{}, "r":{}}, \
+     "bottom": {"l":{}, "c":{}, "r":{}}}
 
-pieces = {
-    1:{"name": "1",
-       "up":   {"bird":3, "side":1},
-       "right":{"bird":3, "side":2},
-       "down": {"bird":1, "side":2},
-       "left": {"bird":2, "side":1}},
-    2:{"name": "2",
-       "up":   {"bird":2, "side":2},
-       "right":{"bird":4, "side":2},
-       "down": {"bird":1, "side":1},
-       "left": {"bird":1, "side":1}},
-    3:{"name": "3",
-       "up":   {"bird":1, "side":1},
-       "right":{"bird":2, "side":1},
-       "down": {"bird":4, "side":1},
-       "left": {"bird":3, "side":1}},
+board = [ {}, {}, {}, {}, {}, {}, {}, {}, {} ]
+
+test_pieces = { \
+    1:{"name": "1", "orentation":0, "card":[
+       {"bird":3, "side":1}, # 0
+       {"bird":3, "side":2}, # 1
+       {"bird":1, "side":2}, # 2
+       {"bird":2, "side":1}  # 3
+    ]},
+    2:{"name": "2", "orentation":0, "card":[
+       {"bird":3, "side":2},
+       {"bird":4, "side":2},
+       {"bird":1, "side":1},
+       {"bird":4, "side":1}
+    ]},
+    3:{"name": "3", "orentation":0, "card":[
+       {"bird":1, "side":1},
+       {"bird":2, "side":2},
+       {"bird":4, "side":2},
+       {"bird":3, "side":1}
+    ]}}
+
+# 1 3 2 3 2 0
+all_pieces = { \
+    1:{"name": "1", "orentation":0, "card":[
+       {"bird":3, "side":1}, # 0
+       {"bird":3, "side":2}, # 1
+       {"bird":1, "side":2}, # 2
+       {"bird":2, "side":1}  # 3
+    ]},
+    2:{"name": "2", "orentation":0, "card":[
+       {"bird":2, "side":2},
+       {"bird":4, "side":2},
+       {"bird":1, "side":1},
+       {"bird":1, "side":1}
+    ]},
+    3:{"name": "3", "orentation":0, "card":[
+       {"bird":1, "side":1},
+       {"bird":2, "side":1},
+       {"bird":4, "side":1},
+       {"bird":3, "side":2}
+    ]},
+    4:{"name": "4", "orentation":0, "card":[
+       {"bird":4, "side":2},
+       {"bird":1, "side":1},
+       {"bird":3, "side":1},
+       {"bird":2, "side":2}
+    ]},
+    5:{"name": "5", "orentation":0, "card":[
+       {"bird":3, "side":2},
+       {"bird":4, "side":1},
+       {"bird":4, "side":1},
+       {"bird":1, "side":1}
+    ]},
+    6:{"name": "6", "orentation":0, "card":[
+       {"bird":1, "side":2},
+       {"bird":2, "side":1},
+       {"bird":4, "side":2},
+       {"bird":3, "side":1}
+    ]},
+    7:{"name": "6", "orentation":0, "card":[
+       {"bird":1, "side":1},
+       {"bird":2, "side":1},
+       {"bird":4, "side":2},
+       {"bird":3, "side":1}
+    ]},
+    8:{"name": "6", "orentation":0, "card":[
+       {"bird":1, "side":1},
+       {"bird":2, "side":1},
+       {"bird":4, "side":2},
+       {"bird":3, "side":1}
+    ]},
+    9:{"name": "6", "orentation":0, "card":[
+       {"bird":1, "side":1},
+       {"bird":2, "side":1},
+       {"bird":4, "side":2},
+       {"bird":3, "side":1}
+    ]}
+}
+
+old_pieces = { \
     4:{"name": "4",
-       "up":   {"bird":4, "side":2},
-       "right":{"bird":1, "side":1},
-       "down": {"bird":3, "side":1},
-       "left": {"bird":2, "side":1}},
+       0: {"bird":4, "side":2},
+       1: {"bird":1, "side":1},
+       2: {"bird":3, "side":1},
+       3: {"bird":2, "side":1}},
     5:{"name": "5",
-       "up":   {"bird":3, "side":2},
-       "right":{"bird":4, "side":2},
-       "down": {"bird":2, "side":2},
-       "left": {"bird":1, "side":1}},
+       0: {"bird":3, "side":2},
+       1: {"bird":4, "side":2},
+       2: {"bird":2, "side":2},
+       3: {"bird":1, "side":1}},
     6:{"name": "6",
-       "up":   {"bird":1, "side":1},
-       "right":{"bird":2, "side":1},
-       "down": {"bird":4, "side":2},
-       "left": {"bird":3, "side":1}},
+       0: {"bird":1, "side":1},
+       1: {"bird":2, "side":1},
+       2: {"bird":4, "side":2},
+       3: {"bird":3, "side":1}},
     7:{"name": "7",
-       "up":   {"bird":2, "side":2},
-       "right":{"bird":3, "side":1},
-       "down": {"bird":4, "side":2},
-       "left": {"bird":4, "side":1}},
+       0: {"bird":2, "side":2},
+       1: {"bird":3, "side":1},
+       2: {"bird":4, "side":2},
+       3: {"bird":4, "side":1}},
     8:{"name": "8",
-       "up":   {"bird":4, "side":1},
-       "right":{"bird":2, "side":2},
-       "down": {"bird":3, "side":2},
-       "left": {"bird":1, "side":2}},
+       0: {"bird":4, "side":1},
+       1: {"bird":2, "side":2},
+       2: {"bird":3, "side":2},
+       3: {"bird":1, "side":2}},
     9:{"name": "9",
-       "up":   {"bird":3, "side":1},
-       "right":{"bird":1, "side":2},
-       "down": {"bird":2, "side":1},
-       "left": {"bird":4, "side":2}},
+       0: {"bird":3, "side":1},
+       1: {"bird":1, "side":2},
+       2: {"bird":2, "side":1},
+       3: {"bird":4, "side":2}},
 }
 def print_piece(piece):
     """ Function to print out a piece """
-
-    print("+--{0}:{1}--+".format(piece["up"]["bird"], piece["up"]["side"]))
+    up = (0 + piece["orentation"]) % 4
+    right = (1 + piece["orentation"]) % 4
+    down = (2 + piece["orentation"]) % 4
+    left = (3 + piece["orentation"]) % 4
+    print("+--{0}:{1}--+".format(piece["card"][up]["bird"], piece["card"][up]["side"]))
     print("|       |")
-    print("{0}:{1} {2} {3}:{4}".format(piece["left"]["bird"], \
-      piece["left"]["side"], piece["name"], piece["right"]["bird"],
-      piece["right"]["side"]))
+    print("{0}:{1} {2} {3}:{4}".format(piece["card"][left]["bird"], \
+      piece["card"][left]["side"], piece["name"], piece["card"][right]["bird"],
+      piece["card"][right]["side"]))
     print("|       |")
-    print("+--{0}:{1}--+".format(piece["down"]["bird"], \
-      piece["down"]["side"]))
+    print("+--{0}:{1}--+".format(piece["card"][down]["bird"], \
+      piece["card"][down]["side"]))
 
+def print_board_summary(board):
+    for bn in range(0, 6):
+        print("{}({}) ".format(board[bn]["name"], board[bn]["orentation"]),
+                end="")
 
-def rotate_left(piece, pieces):
-    """ rotate a piece to the left """
-    # print("Rotating piece ", piece)
+    print("")
 
-    temp = {}
-    temp["bird"] = pieces[piece]["up"]["bird"]
-    temp["side"] = pieces[piece]["up"]["side"]
-
-    pieces[piece]["up"]["bird"] = pieces[piece]["right"]["bird"]
-    pieces[piece]["up"]["side"] = pieces[piece]["right"]["side"]
-
-    pieces[piece]["right"]["bird"] = pieces[piece]["down"]["bird"]
-    pieces[piece]["right"]["side"] = pieces[piece]["down"]["side"]
-
-    pieces[piece]["down"]["bird"] = pieces[piece]["left"]["bird"]
-    pieces[piece]["down"]["side"] = pieces[piece]["left"]["side"]
-
-    pieces[piece]["left"]["bird"] = temp["bird"]
-    pieces[piece]["left"]["side"] = temp["side"]
-
-
-def print_board_row(br):
+def print_board_row(board, row = 0):
     """ Print out the given board row """
-    print("+--{0}:{1}--+ +--{2}:{3}--+ +--{4}:{5}--+").format(\
-      br["r"]["up"]["bird"], br["r"]["up"]["side"],\
-      br["m"]["up"]["bird"], br["m"]["up"]["side"],\
-      br["l"]["up"]["bird"], br["l"]["up"]["side"])
+    up = 0
+    right = 1
+    down = 2
+    left = 3
 
-    print("|       | |       | |       |")
-    print("{0}:{1} {2} {3}:{4} {5}:{6} {7} {8}:{9} {10}:{11} {12} {13}:{14}").\
+    row_base = row
+    # These are some shortcuts to specific cards rotated to their
+    # respective orentations.
+    #    First character
+    # o for orentation,  c for card
+    #    Second character
+    # # Board slot number
+    #    Third character (only for "c" card shortcuts)
+    # u for up, r for right, d for down, l for left,
+    # Third character is adjusted based on offset value.
+    #
+    o0 = board[row_base]['orentation']
+    o1 = board[row_base + 1]['orentation']
+    o2 = board[row_base + 2]['orentation']
+
+    c0u = board[row_base]['card'][(up + o0) % 4]
+    c1u = board[row_base + 1]['card'][(up + o1) % 4]
+    c2u = board[row_base + 2]['card'][(up + o2) % 4]
+    print("+--{0}:{1}--+ +--{2}:{3}--+ +--{4}:{5}--+".format(\
+      c0u['bird'], c0u['side'], c1u['bird'], c1u['side'], \
+      c2u['bird'], c2u['side']))
+
+    print("|    {0}  | |    {1}  | |    {2}  |".format(\
+      board[row_base]['orentation'], board[row_base + 1]['orentation'],
+      board[row_base + 2]['orentation']))
+
+    c0l = board[row_base]['card'][(left + o0) % 4]
+    c0r = board[row_base]['card'][(right + o0) % 4]
+    c1l = board[row_base + 1]['card'][(left + o1) % 4]
+    c1r = board[row_base + 1]['card'][(right + o1) % 4]
+    c2l = board[row_base + 2]['card'][(left + o2) % 4]
+    c2r = board[row_base + 2]['card'][(right + o2) % 4]
+    print("{0}:{1} {2} {3}:{4} {5}:{6} {7} {8}:{9} {10}:{11} {12} {13}:{14}".\
       format(\
-      br["r"]["left"]["bird"], br["r"]["left"]["side"], br["r"]["name"],
-      br["r"]["right"]["bird"], br["r"]["right"]["side"],\
-      br["m"]["left"]["bird"], br["m"]["left"]["side"], br["m"]["name"],
-      br["m"]["right"]["bird"], br["m"]["right"]["side"],\
-      br["l"]["left"]["bird"], br["l"]["left"]["side"], br["l"]["name"],
-      br["l"]["right"]["bird"], br["l"]["right"]["side"])
+      c0l['bird'], c0l["side"], board[row_base]["name"],
+      c0r['bird'], c0r["side"], 
+      c1l['bird'], c1l["side"], board[row_base + 1]["name"],
+      c1r['bird'], c1r["side"], 
+      c2l['bird'], c2l["side"], board[row_base + 2]["name"],
+      c2r['bird'], c2r["side"]))
 
     print("|       | |       | |       |")
-    print("+--{0}:{1}--+ +--{2}:{3}--+ +--{4}:{5}--+").format(\
-      br["r"]["down"]["bird"], br["r"]["down"]["side"],\
-      br["m"]["down"]["bird"], br["m"]["down"]["side"],\
-      br["l"]["down"]["bird"], br["l"]["down"]["side"])
+
+    c0d = board[row_base]['card'][(down + o0) % 4]
+    c1d = board[row_base + 1]['card'][(down + o1) % 4]
+    c2d = board[row_base + 2]['card'][(down + o2) % 4]
+    print("+--{0}:{1}--+ +--{2}:{3}--+ +--{4}:{5}--+".format(\
+      c0d['bird'], c0d['side'], c1d['bird'], c1d['side'], \
+      c2d['bird'], c2d['side']))
 
 
 def print_board(board):
     """ Print out the board"""
-    print_board_row(board["top"])
-    print_board_row(board["middle"])
-    print_board_row(board["bottom"])
-    print("\n")
+    print_board_row(board)
+    print_board_row(board, 3)
+    # print_board_row(board["bottom"])
 
 
-def piece_has(cp, bs):
-    """ Walk the four sides of the "compare piece" cp, and see if any of
-        the sides match our "board side" bs.  """
-    if cp["up"]["bird"] == bs["bird"] and cp["up"]["side"] != bs["side"]:
-        return True
-
-    if cp["right"]["bird"] == bs["bird"] and cp["right"]["side"] != bs["side"]:
-        return True
-
-    if cp["left"]["bird"] == bs["bird"] and cp["left"]["side"] != bs["side"]:
-        return True
-
-    if cp["down"]["bird"] == bs["bird"] and cp["down"]["side"] != bs["side"]:
-        return True
-
-    return False
-
-
-def piece_match_piece(cp, mp):
-    """ Take mp and walk all four sides of it, looking to see if any of them
-        have a match in cp.  One match is all we need, so return True as soon
-        as we find it. """
-
-    if piece_has(cp, mp["left"]):
-        return True
-
-    if piece_has(cp, mp["up"]):
-        return True
-
-    if piece_has(cp, mp["right"]):
-        return True
-
-    if piece_has(cp, mp["down"]):
-        return True
-
-    return False
-
-def check_permutation(b):
-    """ Make a first pass at a specific permutation, without verifying
-        every single connection.
-        For corner spots, make sure they have at least two matches, one
-        for each ajoining piece
-        For side center pieces, make sure their are three matches, one
-        for each ajoining piece.
-        For the center, each side needs one match per side.
-
-        We can do even better, but this is a start."""
-
-    # For the middle, we need 4 matches
-    found = 0
-    cp = b["top"]["m"]
-    mp = b["middle"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["r"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["l"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["bottom"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    if found != 4:
-        return False
-
-    if found > 4:
-        print("What, more than 4????")
-        print(mp)
-        print(cp)
-        print(b)
-        sys.exit(1)
-
-    # Top left compare
-    found = 0
-    mp = b["top"]["l"]
-    cp = b["top"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["l"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    if found == 2:
-        return True
-
-    # top right compare
-    found = 0
-    mp = b["top"]["r"]
-    p = b["top"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["r"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    if found == 2:
-        return True
-
-    # bottom left compare
-    found = 0
-    mp = b["bottom"]["l"]
-    cp = b["bottom"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["l"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    if found == 2:
-        return True
-
-    # bottom right compare
-    found = 0
-    mp = b["bottom"]["r"]
-    cp = b["bottom"]["m"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    cp = b["middle"]["r"]
-    if piece_match_piece(cp, mp):
-        found = found + 1
-
-    if found == 2:
-        return True
-
-    return False
-
-# With 3x3, make this row/column based
 def check_board(b):
+    """ Walk the board from top left (0) to bottom right (9).
+        If we find a mis-match, return the board slot number.
+        If it's all good, return 10
+    """
+    up = 0
+    right = 1
+    down = 2
+    left = 3
+
+    # Shortcut names
+    # o for orentation, then the index of the board slot 
+    o0 = b[0]['orentation']
+    o1 = b[1]['orentation']
+    o2 = b[2]['orentation']
+    # c for card, then the index of the board slot
+    c0 = b[0]['card']
+    c1 = b[1]['card']
+    c2 = b[2]['card']
+
     """ See if this board order is a solved puzzle """
-    if b["top"]["r"]["right"]["bird"] != b["top"]["m"]["left"]["bird"]:
-        return False
-    if b["top"]["r"]["right"]["side"] == b["top"]["m"]["left"]["side"]:
-        return False
-    if b["top"]["m"]["right"]["bird"] != b["top"]["l"]["left"]["bird"]:
-        return False
-    if b["top"]["m"]["right"]["side"] == b["top"]["l"]["left"]["side"]:
-        return False
+    # 0 with 1
+    if c0[(right + o0) % 4]["bird"] != c1[(left + o1) % 4]["bird"]:
+        return 0
+    if c0[(right + o0) % 4]["side"] == c1[(left + o1) % 4]["side"]:
+        return 0
 
-    if b["top"]["r"]["down"]["bird"] != b["middle"]["r"]["up"]["bird"]:
-        return False
-    if b["top"]["r"]["down"]["side"] == b["middle"]["r"]["up"]["side"]:
-        return False
-    if b["top"]["m"]["down"]["bird"] != b["middle"]["m"]["up"]["bird"]:
-        return False
-    if b["top"]["m"]["down"]["side"] == b["middle"]["m"]["up"]["side"]:
-        return False
-    if b["top"]["l"]["down"]["bird"] != b["middle"]["l"]["up"]["bird"]:
-        return False
-    if b["top"]["l"]["down"]["side"] == b["middle"]["l"]["up"]["side"]:
-        return False
+    # 1 with 2
+    if c1[(right + o1) % 4]["bird"] != c2[(left + o2) % 4]["bird"]:
+        return 1
+    if c1[(right + o1) % 4]["side"] == c2[(left + o2) % 4]["side"]:
+        return 1
 
-    if b["middle"]["r"]["right"]["bird"] != b["middle"]["m"]["left"]["bird"]:
-        return False
-    if b["middle"]["r"]["right"]["side"] == b["middle"]["m"]["left"]["side"]:
-        return False
-    if b["middle"]["m"]["right"]["bird"] != b["middle"]["l"]["left"]["bird"]:
-        return False
-    if b["middle"]["m"]["right"]["side"] == b["middle"]["l"]["left"]["side"]:
-        return False
+    # End of top row
+    # o for orentation, then the index of the board slot 
+    o3 = b[3]['orentation']
+    o4 = b[4]['orentation']
+    o5 = b[5]['orentation']
+    # c for card, then the index of the board slot
+    c3 = b[3]['card']
+    c4 = b[4]['card']
+    c5 = b[5]['card']
 
-    if b["middle"]["r"]["down"]["bird"] != b["bottom"]["r"]["up"]["bird"]:
-        return False
-    if b["middle"]["r"]["down"]["side"] == b["bottom"]["r"]["up"]["side"]:
-        return False
-    if b["middle"]["m"]["down"]["bird"] != b["bottom"]["m"]["up"]["bird"]:
-        return False
-    if b["middle"]["m"]["down"]["side"] == b["bottom"]["m"]["up"]["side"]:
-        return False
-    if b["middle"]["l"]["down"]["bird"] != b["bottom"]["l"]["up"]["bird"]:
-        return False
-    if b["middle"]["l"]["down"]["side"] == b["bottom"]["l"]["up"]["side"]:
-        return False
+    # This is for comparing card 3, if UP fails, we consider 2
+    # the last succes, but if to the right fails (after up works)
+    # we return 3 and let slot 4 rotate first.
+    if c0[(down + o0) % 4]["bird"] != c3[(up + o3) % 4]["bird"]:
+        return 2
+    if c0[(down + o0) % 4]["side"] == c3[(up + o3) % 4]["side"]:
+        return 2
+    if c3[(right + o3) % 4]["bird"] != c4[(left + o4) % 4]["bird"]:
+        return 3
+    if c3[(right + o3) % 4]["side"] == c4[(left + o4) % 4]["side"]:
+        return 3
 
-    if b["bottom"]["r"]["right"]["bird"] != b["bottom"]["m"]["left"]["bird"]:
-        return False
-    if b["bottom"]["r"]["right"]["side"] == b["bottom"]["m"]["left"]["side"]:
-        return False
-    if b["bottom"]["m"]["right"]["bird"] != b["bottom"]["l"]["left"]["bird"]:
-        return False
-    if b["bottom"]["m"]["right"]["side"] == b["bottom"]["l"]["left"]["side"]:
-        return False
-    return True
+    # Now on to board slot 4
+    if c1[(down + o1) % 4]["bird"] != c4[(up + o4) % 4]["bird"]:
+        print("3.1")
+        return 3
+    if c1[(down + o1) % 4]["side"] == c4[(up + o4) % 4]["side"]:
+        print("3.1")
+        return 3
+    if c4[(right + o4) % 4]["bird"] != c5[(left + o5) % 4]["bird"]:
+        return 4
+    if c4[(right + o4) % 4]["side"] == c5[(left + o5) % 4]["side"]:
+        return 4
+
+    # Final test for first 2 rows, board slot 2 & 5 up & down
+    if c1[(down + o1) % 4]["bird"] != c4[(up + o3) % 4]["bird"]:
+        return 4
+    if c1[(down + o1) % 4]["side"] == c4[(up + o3) % 4]["side"]:
+        return 4
+
+    return 10
+    #
+    return 10
 
 
-def brute_force(args, board): 
+def smart_solve(board): 
     found = 0
-    perms = 0;
-    tc = 0;
-    possible = 0;
-    skip = 0;
+    perms = 0
+    tc = 0
+    possible = 0
+    skip = 0
 
-    for bp in itertools.permutations((x for x in range(1, 10)), 9):
-        perms = perms + 1
-
-    print("We have %d permutations to explore" % perms)
+    # The possible orderings of a set of unique items is the factorial of
+    # that set size.
+    perms = math.factorial(9) 
 
     # Total rotations possible per iteration is:
     # Sides of each piece to the power of number of pieces.
     rotations = int(math.pow(4, 9))
+    total = rotations * perms
+    print("We have {0} permutations with {1} rotations".format(perms, rotations))
+    print("Total:{0:,}".format(total))
+    print("")
 
-    count = 0
-    for bp in itertools.permutations((x for x in range(1, 10)), 9):
-        count = count + 1
-        if (args.start and count < args.start):
-            tc = tc + rotations
-            continue
+    bn = 0
+    done = False
+    found = 0
+    max_failed = 0
+    checked = 0
+    while not done:
+        checked += 1
+        print_board(board)
+        failed_at = check_board(board)
+        print("Failed at {}".format(failed_at))
+        # We keep track of the furthest we got while
+        # looking for a match so we can skip any iterations that happen below
+        # that point as we already know we can't make a match that deep.
+        max_failed = max(max_failed, failed_at)
+        if failed_at == 10:
+            print("We found one here")
+            print_board_summary(board)
+            found += 1
+            failed_at = 1
 
-        if (args.quit and count > args.quit):
-            break
+        bn = failed_at + 1
+        # Rotate next, if we are giving up on a subset (i.e. moving up
+        # one in the rotation list, then we can also throw out all iterations
+        # that exist for that subset.  No point in trying 1234 1243 if 12 can't
+        # match.
+        if rotate_next(board, bn) == True:
+            print("Continue testing")
+        else:
+            print("Nothing left in this instance to rotate")
+            done = True
 
-        # print bp, " count:", count, " remaining:", perms - count
-        info_str = "\r" + str(bp) + " count:" + str(count) + " remaining:" + \
-            str(perms - count) + " skip:" + str(skip) + " possible:" + \
-            str(possible) + "    "
-        sys.stdout.write(info_str)
-        sys.stdout.flush()
-        board["top"]["r"] = pieces[bp[0]]
-        board["top"]["m"] = pieces[bp[1]]
-        board["top"]["l"] = pieces[bp[2]]
-        board["middle"]["r"] = pieces[bp[3]]
-        board["middle"]["m"] = pieces[bp[4]]
-        board["middle"]["l"] = pieces[bp[5]]
-        board["bottom"]["r"] = pieces[bp[6]]
-        board["bottom"]["m"] = pieces[bp[7]]
-        board["bottom"]["l"] = pieces[bp[8]]
+    print("Found:{} checked:{}  deepest:{}".format(found, checked, max_failed))
 
-        # This is not really saving us much, as the check test is not
-        # very good.
-        if not check_permutation(board):
-            tc = tc + rotations
-            skip = skip + 1
-            continue
+def rotate_next(board, bn):
+    """ Move the rotation to the next possible spot from the given stop """
+    done = False
+    while bn >= 0:
+        print("bn:{} board:{}".format(bn, board[bn]))
+        if board[bn]["orentation"] < 3:
+            board[bn]["orentation"] += 1
+            # print("Rotate {} to {}".format(bn, board[bn]['orentation']))
+            return True
 
-        possible = possible + 1
-        #
-        # Another idea is to test rotated item right away for its edges
-        # and see if it passes.  Will this help us with speeding up the
-        # check board function?
-        for x in range(0, rotations):
-            if check_board(board):
-                found = found + 1
-                print("\n")
-                print("found match", found, "at ", bp)
-                print("after %d permutaions and %d rotations" % (count, tc))
-                print_board(board)
+        board[bn]["orentation"] = 0
+        # print("Reset {} to {}".format(bn, board[bn]['orentation']))
+        bn = bn - 1
 
-            rotate_left(bp[8], pieces)
-            tc = tc + 1
-            if (tc % 4 == 0):
-                rotate_left(bp[7], pieces)
-            if (tc % 16 == 0):
-                rotate_left(bp[6], pieces)
-            if (tc % 64 == 0):
-                rotate_left(bp[5], pieces)
-            if (tc % 256 == 0):
-                rotate_left(bp[4], pieces)
-            if (tc % 1024 == 0):
-                rotate_left(bp[3], pieces)
-            if (tc % 4096 == 0):
-                rotate_left(bp[2], pieces)
-            if (tc % 16384 == 0):
-                rotate_left(bp[1], pieces)
-            if (tc % 65536 == 0):
-                rotate_left(bp[0], pieces)
+    return False
 
-    print("found %d matches after %d permutaions and %d rotations"
-            % (found, count, tc))
 
+def brute_force(board):
+    """ Try every possible combination of the current iteration """
+    found = 0
+    checked = 0
+    for b0_rotation in range(0, 4):
+        board[0]['orentation'] = b0_rotation
+        for b1_rotation in range(0, 4):
+            board[1]['orentation'] = b1_rotation
+            for b2_rotation in range(0, 4):
+                board[2]['orentation'] = b2_rotation
+                for b3_rotation in range(0, 4):
+                    board[3]['orentation'] = b3_rotation
+                    for b4_rotation in range(0, 4):
+                        board[4]['orentation'] = b4_rotation
+
+                        # print_board(board)
+                        if check_board(board) == 10:
+                            found += 1
+                            print_board_summary(board)
+                        checked += 1
+
+
+    print("Brute force Found:{} checked:{}".format(found, checked))
 
 if __name__ == "__main__":
     """ Take our puzzle, compute permutations and start rotating """
@@ -414,17 +398,19 @@ if __name__ == "__main__":
                         help="quitting permutation count", type=int)
     args = parser.parse_args()
 
-    for piece in pieces:
-        print_piece(pieces[piece])
+    print_piece(all_pieces[1])
 
-    board["top"]["r"] = empty
-    board["top"]["m"] = empty
-    board["top"]["l"] = empty
-    board["middle"]["r"] = empty
-    board["middle"]["m"] = empty
-    board["middle"]["l"] = empty
-    board["bottom"]["r"] = empty
-    board["bottom"]["m"] = empty
-    board["bottom"]["l"] = empty
+    board[0] = all_pieces[1]
+    board[1] = all_pieces[2]
+    board[2] = all_pieces[3]
+    board[3] = all_pieces[4]
+    board[4] = all_pieces[5]
+    board[5] = all_pieces[6]
+    board[6] = all_pieces[7]
+    board[7] = all_pieces[8]
+    board[8] = all_pieces[9]
 
-    brute_force(args, board)
+    # print(board)
+    smart_solve(board)
+
+    brute_force(board)
