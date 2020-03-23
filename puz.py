@@ -10,12 +10,12 @@ empty = { "name": "0", "orentation":0, "card":[
        {"bird":0, "side":0}
     ]}
 
-# The board is a 9X9 square.
+# The board is a 3X3 square.
 # Each location describes a piece and it's orentation (turn)
 # Turn is 0-3 with 0 being no turn, 1 is rotating the piece clockwise
 # by 1/4, and so on.
 board = [ {}, {}, {}, {}, {}, {}, {}, {}, {} ]
-board_max = 9
+BOARD_MAX = 9
 
 test_pieces = { \
     1:{"name": "1", "orentation":0, "card":[
@@ -152,8 +152,8 @@ def print_piece(piece):
 
 def print_board_summary(board, msg = ""):
     print("{} ".format(msg), end="")
-    for bn in range(0, 9):
-        print("{}r{} ".format(board[bn]["name"], board[bn]["orentation"]),
+    for bs in range(0, BOARD_MAX):
+        print("{}r{} ".format(board[bs]["name"], board[bs]["orentation"]),
               end="")
     print("")
 
@@ -330,12 +330,19 @@ def check_board(b):
     if c5[(down + o5) % 4]["side"] == c8[(up + o8) % 4]["side"]:
         return 7
 
-    return 9
+    return BOARD_MAX
+
+def reset_orentation(board, start_index=0):
+    """ Reset the orentation for each piece in the board staring from
+        the given index and counting upwards to the final board slot """
+
+    for bs in range(start_index, BOARD_MAX):
+        board[bs]["orentation"] = 0
 
 
 def smart_solve(board):
     found = 0
-    bn = 0
+    bs = 0
     done = False
     found = 0
     max_failed = 0
@@ -345,56 +352,55 @@ def smart_solve(board):
         checked += 1
         # print_board(board)
         failed_at = check_board(board)
+# print("failed at:{} ".format(failed_at), end="")
+#         for bs in range(0, BOARD_MAX):
+#             print("{} ".format(board[bs]["orentation"]), end="")
+#         print("")
         # print("Failed at {}".format(failed_at))
         # We keep track of the furthest we got while
         # looking for a match so we can skip any iterations that happen below
         # that point as we already know we can't make a match that deep.
         max_failed = max(max_failed, failed_at)
-        if failed_at == 9:
+        if failed_at == BOARD_MAX:
             print_board_summary(board, "SS")
             found += 1
-            failed_at = 1
+            failed_at = 7
 
-        bn = failed_at + 1
+        bs = failed_at + 1
         # Rotate next, if we are giving up on a subset (i.e. moving up
         # one in the rotation list, then we can also throw out all iterations
         # that exist for that subset.  No point in trying 1234 1243 if 12 can't
         # match.
-        if rotate_next(board, bn) == False:
+        if rotate_next(board, bs) == False:
             # print("Nothing left in this instance to rotate")
             done = True
 
-    #for bn in range(0, 9):
-    #    print(":{}:".format(board[bn]["name"]), end="")
+    #for bs in range(0, BOARD_MAX):
+    #    print(":{}:".format(board[bs]["name"]), end="")
     #print(" ", end="")
     #print("Found:{} checked:{}  deepest:{}".format(found, checked, max_failed))
 
-def rotate_next(board, bn):
-    """ Move the rotation to the next possible spot from the given stop """
-    done = False
-    reset = False    # This goes to true if we have cleared higher board slots
+def rotate_next(board, bs):
+    """ Rotate the orentation of the given board slot to the next possible
+        value.  If the current slot is already at max rotation, then move
+        down to a lower number board slot and again try to rotate."""
 
-    while bn >= 0:
-        if board[bn]["orentation"] < 3:
-            board[bn]["orentation"] += 1
-            # print("Rotate {} to {}".format(bn, board[bn]['orentation']))
+    reset = False # This goes to true if we have cleared higher board slots
+
+    while bs >= 0:
+        board[bs]["orentation"] = (board[bs]["orentation"] + 1) % 4
+        if board[bs]["orentation"] != 0:
             return True
 
         # If an orentation rolls over and goes back to zero, then
         # we also have to set all orentations at higher board slots back
         # to zero.  We only need to do it once per call though, so we use
         # "reset" to tell future loops that it's been done.
-        board[bn]["orentation"] = 0
-        # print("Reset {} to {}".format(bn, board[bn]['orentation']))
-        down_bn = bn + 1
-        while not reset and down_bn < board_max:  # Max board number
-            board[down_bn]["orentation"] = 0
-            # print("Reset {} to {}".format(down_bn, board[down_bn]['orentation']))
-            down_bn += 1
+        if not reset:
+            reset_orentation(board, bs)
             reset = True
 
-        # Now that that is done, we can go up a level
-        bn = bn - 1
+        bs = bs - 1
 
     return False
 
@@ -423,7 +429,8 @@ def brute_force(board):
                                         board[8]['orentation'] = b8_rotation
 
                                         # print_board(board)
-                                        if check_board(board) == 9:
+                                        if check_board(board) == BOARD_MAX:
+                                            # print_board(board)
                                             found += 1
                                             print_board_summary(board, "BF")
                                         checked += 1
@@ -442,17 +449,22 @@ if __name__ == "__main__":
 
     # The possible orderings of a set of unique items is the factorial of
     # that set size.
-    perms = math.factorial(9)
+    perms = math.factorial(BOARD_MAX)
 
     # Total rotations possible per iteration is:
     # Sides of each piece to the power of number of pieces.
-    rotations = int(math.pow(4, 9))
+    rotations = int(math.pow(4, BOARD_MAX))
     total = rotations * perms
     print("We have {0} permutations with {1} rotations".format(perms, rotations))
     print("Total:{0:,}".format(total))
     print("")
 
-    for bp in itertools.permutations((x for x in range(1, 10)), 9):
+    current_top = 0
+    for bp in itertools.permutations((x for x in range(1, 10)), BOARD_MAX):
+        if current_top != bp[0]:
+            current_top = bp[0]
+            print("{} Iteration".format(current_top))
+
         board[0] = all_pieces[bp[0]]
         board[1] = all_pieces[bp[1]]
         board[2] = all_pieces[bp[2]]
@@ -464,7 +476,7 @@ if __name__ == "__main__":
         board[8] = all_pieces[bp[8]]
 
         #  print(board)
+        reset_orentation(board)
         smart_solve(board)
-        brute_force(board)
-
-
+        # reset_orentation(board)
+        # brute_force(board)
